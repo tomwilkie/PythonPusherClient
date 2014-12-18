@@ -19,10 +19,11 @@ class Pusher(object):
     client_id = 'PythonPusherClient'
     protocol = 6
 
-    def __init__(self, key, secure=True, secret=None, user_data=None, log_level=logging.INFO, daemon=True):
+    def __init__(self, key, secure=True, secret=None, user_data=None, log_level=logging.INFO, daemon=True, auth_callback=None):
         self.key = key
         self.secret = secret
         self.user_data = user_data or {}
+        self.auth_callback = auth_callback
 
         self.channels = {}
 
@@ -57,12 +58,15 @@ class Pusher(object):
             )
             data['channel_data'] = json.dumps(self.user_data)
         elif channel_name.startswith('private-'):
-            data['auth'] = self._generate_private_key(
-                self.connection.socket_id,
-                self.key,
-                channel_name,
-                self.secret
-            )
+            if self.auth_callback is not None:
+              data['auth'] = self.auth_callback(self.connection.socket_id, channel_name)
+            else:
+              data['auth'] = self._generate_private_key(
+                  self.connection.socket_id,
+                  self.key,
+                  channel_name,
+                  self.secret
+              )
 
         self.connection.send_event('pusher:subscribe', data)
 
