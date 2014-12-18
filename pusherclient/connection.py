@@ -88,7 +88,10 @@ class Connection(Thread):
             self.socket.close()
 
     def run(self):
-        self._connect()
+        try:
+          self._connect()
+        finally:
+          self.logger.info("Connection thread exiting.")
 
     def _connect(self):
         self.state = "connecting"
